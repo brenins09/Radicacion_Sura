@@ -1,0 +1,204 @@
+import os
+import json
+import requests
+from io import BytesIO
+from datetime import date
+
+class RadicacionSuraApi:
+
+    def __init__(self, base_url: str, token: str, email_notificacion: str):
+        self.base_url = base_url.rstrip('/')
+        self.token = token
+        self.email_notificacion = email_notificacion
+        self.headers = {
+            "x-apptag-token": self.token,
+            "Origin": "https://procesadorrips.segurossura.com.co",
+            "Referer": "https://procesadorrips.segurossura.com.co/",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36",
+            "Accept": "application/json, text/plain, */*"
+        }
+
+
+    def cargar_facturas(self, archivo_path):
+        """
+        Carga un archivo PDF al endpoint de SURA con datos del prestador.
+        
+        - token: str, token de autorización.
+        - archivo_path: str, ruta local al archivo PDF.
+        """
+
+        # Fecha actual para el radicado
+        hoy = date.today()
+        fecha_formateada = f"{hoy.year}/{hoy.month}/{hoy.day}"
+
+        url = f"{self.base_url}/api/v1/fe/loadFile"
+        nombre_archivo = os.path.basename(archivo_path)
+
+        fields = {
+            "version": "V2",
+            "folder": nombre_archivo,  # <- esto debe ser igual al nombre real
+            "data": (
+                '{"lineaNegocio":"EPS","fechaCarga":"2025/6/6","nombrePlan":"Plan de beneficio en salud",'
+                f'"nombrePrestador":"AVIDANTI SAS","emailPrestador":"{self.email_notificacion}",'
+                '"dniPrestador":"800185449","nitDv":"8001854499","tipoDocumento":"A"}'
+            )
+        }
+
+        with open(archivo_path, "rb") as f:
+            files = {
+                "file": (nombre_archivo, f, "application/pdf")
+            }
+            response = requests.post(url, headers=self.headers, data=fields, files=files)
+
+        print("Código de estado:", response.status_code)
+
+        try:
+            return response.json()
+        except ValueError:
+            print("No se pudo decodificar la respuesta como JSON.")
+            return {"error": "Respuesta no es JSON", "contenido": response.text}
+
+
+    def cargar_soportes(self, carpeta_path: str, nombre_factura: int) -> dict:
+        """Carga todos los archivos PDF dentro de una carpeta al endpoint /load/support."""
+
+        url = f"{self.base_url}/api/v1/load/support"
+        folder = nombre_factura
+        data_json = json.dumps({
+            "lineaNegocio": "EPS",
+            "fechaCarga": "2025/6/6",
+            "nombrePlan": "Plan de beneficio en salud",
+            "nombrePrestador": "AVIDANTI SAS",
+            "emailPrestador": self.email_notificacion,
+            "dniPrestador": "800185449",
+            "tipoDniPrestador": "A",
+            "idProveedor": "800185449",
+            "tipoIdProveedor": "A",
+            "nitDv": "8001854499"
+        })
+        data = {
+            "version": "V2",
+            "folder": folder,
+            "data": data_json
+        }
+
+        files = []
+        archivos_abiertos = []
+
+        for nombre_archivo in os.listdir(carpeta_path):
+            if nombre_archivo.lower().endswith(".pdf"):
+                ruta_archivo = os.path.join(carpeta_path, nombre_archivo)
+                f = open(ruta_archivo, "rb")
+                archivos_abiertos.append(f)
+                files.append(("file", (nombre_archivo, f, "application/pdf")))
+
+        if not files:
+            print("[cargar_soportes_desde_carpeta] No se encontraron archivos PDF en la carpeta.")
+            return {"error": "No hay archivos PDF en la carpeta para cargar."}
+
+        try:
+            response = requests.post(url, headers=self.headers, data=data, files=files)
+            print(f"[cargar_soportes_desde_carpeta] Código de estado: {response.status_code}")
+            return self._procesar_respuesta(response)
+        finally:
+            for f in archivos_abiertos:
+                f.close()
+
+        
+    def cargar_rips(self, archivo_json_path, archivo_txt_path, nombre_factura):
+        url = f"{self.base_url}/api/v1/rips/loadJson"
+        nombre_json = os.path.basename(archivo_json_path)
+        nombre_txt = os.path.basename(archivo_txt_path)
+        folder = nombre_factura
+        fields = {
+            "version": "V2",
+            "folder": folder,
+            "lineaNegocio": "EPS",
+            "email": self.email_notificacion
+        }
+        headers = {
+            "x-apptag-token": self.token,
+            "Origin": "https://procesadorrips.segurossura.com.co",
+            "Referer": "https://procesadorrips.segurossura.com.co/",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36",
+            "Accept": "application/json, text/plain, */*"
+        }
+        with open(archivo_json_path, "rb") as f_json, open(archivo_txt_path, "rb") as f_txt:
+            files = {
+                "file": (nombre_json, f_json, "application/json"),
+                "cuv": (nombre_txt, f_txt, "text/plain")
+            }
+            response = requests.post(url, headers=headers, data=fields, files=files)
+        print("Código de estado:", response.status_code)
+        try:
+            return response.json()
+        except ValueError:
+            print("No se pudo decodificar la respuesta como JSON.")
+            return {"error": "Respuesta no es JSON", "contenido": response.text}
+
+
+    def enviar_archivos(self, nombre_factura: int, nombre_estructurados) -> dict:
+            """Carga múltiples archivos RIPS al endpoint /load/files."""
+
+            url = f"{self.base_url}/api/v1/load/files"
+
+            data_payload = {
+                "lineaNegocio": "EPS",
+                "fechaCarga": "2025/6/6",
+                "nombrePlan": "Plan de beneficio en salud",
+                "nombrePrestador": "AVIDANTI SAS",
+                "emailPrestador": self.email_notificacion,
+                "dniPrestador": "800185449",
+                "idProveedor": "800185449",
+                "tipoIdProveedor": "A",
+                "tipoDniPrestador": "A"
+            }
+
+            body_payload = {
+                "fileRips": [f"{nombre_factura}.json"],
+                "fileElectronic": [f"{nombre_factura}.pdf"],
+                "soportes": nombre_estructurados
+            }
+
+            def fake_file(name):
+                return (name, BytesIO(b"contenido de prueba"))
+
+            files = {
+                'data': (None, json.dumps(data_payload), 'application/json'),
+                'body': (None, json.dumps(body_payload), 'application/json'),
+                'typeDocument': (None, 'Factura'),
+                'version': (None, 'V2'),
+            }
+
+            for f in body_payload["fileRips"] + body_payload["fileElectronic"] + body_payload["soportes"]:
+                files[f] = fake_file(f)
+
+            response = requests.post(url, headers=self.headers, files=files)
+            print(f"[cargar_archivos_rips] Código de estado: {response.status_code}")
+            return self._procesar_respuesta(response)
+
+
+
+base_url = "https://apiprocesadorrips.segurossura.com.co"
+token = "8c85e6aa61f136f67695b6079dd2d6ba64576d092d21e44d6dcb1dc08cc6bce3"
+correo = "lfvaldes@cyt.com.co"
+
+api = RadicacionSuraApi(base_url, token, correo)
+
+# ejemplo cargar facturas
+#ruta_del_pdf = r"C:\Users\Usuario\Downloads\sura\Soportes\800185449_ACM_1390708.pdf"
+#respuesta = api.cargar_soportes(ruta_del_pdf)
+
+# ejemplo cargar soportes
+# ruta_carpeta = r"C:\Users\Usuario\Downloads\sura\Soportes\800185449_ACM_1390708\800185449_ACM_1390708"
+# nombre_factura = "800185449_ACM_1390708"
+# respuesta_carga_soportes = api.cargar_soportes(ruta_carpeta, nombre_factura)
+# print(respuesta_carga_soportes)
+
+#ejemplo cargar rips
+# nombre_factura = "800185449_ACM_1390708"
+# archivo_json = rf"C:\Users\Usuario\Downloads\sura\JSON\{nombre_factura}\{nombre_factura}.json"
+# archivo_txt = rf"C:\Users\Usuario\Downloads\sura\JSON\{nombre_factura}\{nombre_factura}-CUV.txt"
+# correo = "lfvaldes@cyt.com.co"
+# respuesta_carga_rips = api.cargar_rips(archivo_json, archivo_txt, nombre_factura)
+# print(respuesta_carga_rips)
