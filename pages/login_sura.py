@@ -1,8 +1,6 @@
-from selenium import webdriver
-from selenium.webdriver.common.by import By
 from time import sleep
-import pyautogui
-from locators import LoginPageLocators
+from selenium import webdriver
+from pages.locators import LoginPageLocators
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
@@ -67,13 +65,3 @@ def login_sura(usuario, contrasenia, url_sura):
         if 'ssoTag' in cookie['name']:
             return cookie['value']
     return None
-
-
-usuario = 1053839414
-contrasenia = 2025
-url_sura = "https://epsapps.suramericana.com/Prestadores/"
-#imagen_chulo_verde = r'C:\Users\Usuario\OneDrive\Documentos\radicacion_sura\chulo_verde.png'
-#input_contraseña = pyautogui.locateOnScreen(r'C:\Users\Usuario\OneDrive\Documentos\radicacion_sura\input_contrasena.png', confidence=0.8)
-
-cookies_login = login_sura(usuario, contrasenia, url_sura)
-print(cookies_login)

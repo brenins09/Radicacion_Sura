@@ -19,6 +19,32 @@ class RadicacionSuraApi:
         }
 
 
+    def _procesar_respuesta(self, response):
+        """
+        Procesa la respuesta de un request HTTP, validando el estado y el contenido.
+        Retorna un diccionario con la respuesta JSON o un error estructurado.
+        """
+        try:
+            json_response = response.json()
+        except ValueError:
+            print("Error: La respuesta no es un JSON válido.")
+            return {
+                "error": "Respuesta no es JSON",
+                "status_code": response.status_code,
+                "contenido": response.text
+            }
+
+        if response.status_code == 200:
+            return json_response
+        else:
+            print(f"Error en la respuesta: {json_response}")
+            return {
+                "error": "Respuesta con error",
+                "status_code": response.status_code,
+                "contenido": json_response
+            }
+
+
     def cargar_facturas(self, archivo_path):
         """
         Carga un archivo PDF al endpoint de SURA con datos del prestador.
@@ -53,7 +79,7 @@ class RadicacionSuraApi:
         print("Código de estado:", response.status_code)
 
         try:
-            return response.json()
+            return response.status_code
         except ValueError:
             print("No se pudo decodificar la respuesta como JSON.")
             return {"error": "Respuesta no es JSON", "contenido": response.text}
@@ -179,11 +205,11 @@ class RadicacionSuraApi:
 
 
 
-base_url = "https://apiprocesadorrips.segurossura.com.co"
-token = "8c85e6aa61f136f67695b6079dd2d6ba64576d092d21e44d6dcb1dc08cc6bce3"
-correo = "lfvaldes@cyt.com.co"
+#base_url = "https://apiprocesadorrips.segurossura.com.co"
+#token = "8c85e6aa61f136f67695b6079dd2d6ba64576d092d21e44d6dcb1dc08cc6bce3"
+#correo = "lfvaldes@cyt.com.co"
 
-api = RadicacionSuraApi(base_url, token, correo)
+#api = RadicacionSuraApi(base_url, token, correo)
 
 # ejemplo cargar facturas
 #ruta_del_pdf = r"C:\Users\Usuario\Downloads\sura\Soportes\800185449_ACM_1390708.pdf"
@@ -196,6 +222,14 @@ api = RadicacionSuraApi(base_url, token, correo)
 # print(respuesta_carga_soportes)
 
 #ejemplo cargar rips
+# nombre_factura = "800185449_ACM_1390708"
+# archivo_json = rf"C:\Users\Usuario\Downloads\sura\JSON\{nombre_factura}\{nombre_factura}.json"
+# archivo_txt = rf"C:\Users\Usuario\Downloads\sura\JSON\{nombre_factura}\{nombre_factura}-CUV.txt"
+# correo = "lfvaldes@cyt.com.co"
+# respuesta_carga_rips = api.cargar_rips(archivo_json, archivo_txt, nombre_factura)
+# print(respuesta_carga_rips)
+
+#Pendiente por probar el envio de los archivos
 # nombre_factura = "800185449_ACM_1390708"
 # archivo_json = rf"C:\Users\Usuario\Downloads\sura\JSON\{nombre_factura}\{nombre_factura}.json"
 # archivo_txt = rf"C:\Users\Usuario\Downloads\sura\JSON\{nombre_factura}\{nombre_factura}-CUV.txt"

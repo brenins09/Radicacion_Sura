@@ -4,9 +4,8 @@ import zipfile
 
 class ProcesamientoArchivo:
 
-    def __init__(self, ruta_carpeta_soportes, ruta_carpeta_rips):
+    def __init__(self, ruta_carpeta_soportes):
         self.ruta_carpeta_soportes = ruta_carpeta_soportes
-        self.ruta_carpeta_rips = ruta_carpeta_rips
 
 
     def obtener_nombres_facturas(self):
