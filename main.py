@@ -78,8 +78,11 @@ for nombre_subcarpeta in os.listdir(carpeta_rips):
             archivos = os.listdir(ruta_subcarpeta)
             ruta_archivo_1 = os.path.join(ruta_subcarpeta, archivos[0])
             ruta_archivo_2 = os.path.join(ruta_subcarpeta, archivos[1])
-            print(f"Archivo1: {ruta_archivo_1}; archivo2: {ruta_archivo_2} nombre de la factura: {nombre_subcarpeta}")
-            respuesta_carga_rips = api.cargar_rips(ruta_archivo_1, ruta_archivo_2, nombre_subcarpeta)
+            print(f"Archivo1: {ruta_archivo_1}") 
+            print(f"archivo2: {ruta_archivo_2}")
+            print(f"nombre de la factura: {nombre_subcarpeta}")
+            respuesta_carga_rips = api.cargar_rips(ruta_archivo_2, ruta_archivo_1, nombre_subcarpeta)
+            print(respuesta_carga_rips)
             if archivos[1].lower().endswith('.json'):
                 listado_rips_procesados.append(archivos[1])
             elif archivos[0].lower().endswith('.json'):
@@ -89,6 +92,9 @@ for nombre_subcarpeta in os.listdir(carpeta_rips):
 
 
 #------ENVIAR LOS ARCHIVOS-------
+print("<<<<<<<<<<<<<<<<<<<<<<<<<ARCHIVOS>>>>>>>>>>>>>>>>>>>>>>>")
+respuesta_enviar_archivos = api.enviar_archivos(listado_facturas_procesadas, listado_soportes_procesados, listado_rips_procesados)
+print(respuesta_enviar_archivos)
 
 
 #listas de lo que se proceso

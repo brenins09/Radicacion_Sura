@@ -45,7 +45,7 @@ class RadicacionSuraApi:
             }
 
 
-    def cargar_facturas(self, archivo_path):
+    def cargar_facturas(self, archivo_path) -> str:
         """
         Carga un archivo PDF al endpoint de SURA con datos del prestador.
         
@@ -163,7 +163,7 @@ class RadicacionSuraApi:
             return {"error": "Respuesta no es JSON", "contenido": response.text}
 
 
-    def enviar_archivos(self, nombre_factura: int, nombre_estructurados) -> dict:
+    def enviar_archivos(self, lista_facturas_procesadas, lista_soportes_procesados, lista_rips_procesados) -> dict:
             """Carga múltiples archivos RIPS al endpoint /load/files."""
 
             url = f"{self.base_url}/api/v1/load/files"
@@ -181,9 +181,9 @@ class RadicacionSuraApi:
             }
 
             body_payload = {
-                "fileRips": [f"{nombre_factura}.json"],
-                "fileElectronic": [f"{nombre_factura}.pdf"],
-                "soportes": nombre_estructurados
+                "fileRips": lista_rips_procesados,
+                "fileElectronic": lista_facturas_procesadas,
+                "soportes": lista_soportes_procesados
             }
 
             def fake_file(name):
@@ -202,37 +202,3 @@ class RadicacionSuraApi:
             response = requests.post(url, headers=self.headers, files=files)
             print(f"[cargar_archivos_rips] Código de estado: {response.status_code}")
             return self._procesar_respuesta(response)
-
-
-
-#base_url = "https://apiprocesadorrips.segurossura.com.co"
-#token = "8c85e6aa61f136f67695b6079dd2d6ba64576d092d21e44d6dcb1dc08cc6bce3"
-#correo = "lfvaldes@cyt.com.co"
-
-#api = RadicacionSuraApi(base_url, token, correo)
-
-# ejemplo cargar facturas
-#ruta_del_pdf = r"C:\Users\Usuario\Downloads\sura\Soportes\800185449_ACM_1390708.pdf"
-#respuesta = api.cargar_soportes(ruta_del_pdf)
-
-# ejemplo cargar soportes
-# ruta_carpeta = r"C:\Users\Usuario\Downloads\sura\Soportes\800185449_ACM_1390708\800185449_ACM_1390708"
-# nombre_factura = "800185449_ACM_1390708"
-# respuesta_carga_soportes = api.cargar_soportes(ruta_carpeta, nombre_factura)
-# print(respuesta_carga_soportes)
-
-#ejemplo cargar rips
-# nombre_factura = "800185449_ACM_1390708"
-# archivo_json = rf"C:\Users\Usuario\Downloads\sura\JSON\{nombre_factura}\{nombre_factura}.json"
-# archivo_txt = rf"C:\Users\Usuario\Downloads\sura\JSON\{nombre_factura}\{nombre_factura}-CUV.txt"
-# correo = "lfvaldes@cyt.com.co"
-# respuesta_carga_rips = api.cargar_rips(archivo_json, archivo_txt, nombre_factura)
-# print(respuesta_carga_rips)
-
-#Pendiente por probar el envio de los archivos
-# nombre_factura = "800185449_ACM_1390708"
-# archivo_json = rf"C:\Users\Usuario\Downloads\sura\JSON\{nombre_factura}\{nombre_factura}.json"
-# archivo_txt = rf"C:\Users\Usuario\Downloads\sura\JSON\{nombre_factura}\{nombre_factura}-CUV.txt"
-# correo = "lfvaldes@cyt.com.co"
-# respuesta_carga_rips = api.cargar_rips(archivo_json, archivo_txt, nombre_factura)
-# print(respuesta_carga_rips)
