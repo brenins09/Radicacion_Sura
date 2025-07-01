@@ -62,6 +62,7 @@ def login_sura(usuario, contrasenia, url_sura):
     #Obtener cookies
     cookies = driver.get_cookies()
     for cookie in cookies:
+        print(cookie)
         if 'ssoTag' in cookie['name']:
             return cookie['value']
     return None

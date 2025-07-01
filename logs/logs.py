@@ -1,23 +1,39 @@
 import logging
+import os
 from datetime import datetime
 
-# Desactiva los logs innecesarios (WebDriver Manager y otras librerías)
-logging.getLogger('webdriver_manager').setLevel(logging.CRITICAL)
-logging.getLogger('requests').setLevel(logging.CRITICAL)
-logging.getLogger('urllib3').setLevel(logging.CRITICAL)
+# -------- LOG PRINCIPAL --------
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+logs_dir = os.path.join(BASE_DIR, "logs")
+os.makedirs(logs_dir, exist_ok=True)
 
-# Configura el logger
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)  # Ajusta el nivel a INFO o ERROR según lo que necesites
+log_filename = os.path.join(logs_dir, f"ejecucion_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log")
 
-# Crea un manejador para guardar los logs en un archivo, con un nombre único por ejecución
-log_filename = rf'C:\Users\bcalonso.RPA01\Documents\Historico_OCGN\Historico\logs\ejecucion_{datetime.now().strftime("%Y%m%d_%H%M%S")}.log'  # Nombre único por ejecución
+logger = logging.getLogger("ejecucion_logger")
+logger.setLevel(logging.INFO)
+
 file_handler = logging.FileHandler(log_filename)
-file_handler.setLevel(logging.INFO)  # Solo guarda logs de nivel INFO o superior
+file_handler.setLevel(logging.INFO)
 
-# Define el formato para los logs
 formatter = logging.Formatter('%(asctime)s | %(levelname)s | %(message)s')
 file_handler.setFormatter(formatter)
-
-# Agrega el manejador al logger
 logger.addHandler(file_handler)
+
+# -------- LOG DE ERRORES SEPARADO --------
+errores_dir = os.path.join(BASE_DIR, "logs_errores")
+os.makedirs(errores_dir, exist_ok=True)
+
+errores_filename = os.path.join(errores_dir, f"errores_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log")
+
+error_logger = logging.getLogger("errores_logger")
+error_logger.setLevel(logging.ERROR)
+
+error_handler = logging.FileHandler(errores_filename)
+error_handler.setLevel(logging.ERROR)
+
+error_handler.setFormatter(formatter)
+error_logger.addHandler(error_handler)
+
+# -------- USO --------
+#slogger.info("Este es un log general.")
+#serror_logger.error("Este es un error crítico.")
